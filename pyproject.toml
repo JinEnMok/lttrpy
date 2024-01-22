@@ -1,0 +1,33 @@
+[project]
+name = "lttrpy"
+version = "2024.1"
+
+authors = [{name = "Said Sattarov", email = "said.sattarov@gmail.com"}]
+maintainers = [{name = "Said Sattarov", email = "said.sattarov@gmail.com"}]
+
+description = "A script to compare several users' watched films on Letterboxd, with ratings and likes"
+readme = "README.md"
+
+requires-python = ">=3.9"
+dependencies = [
+    "requests",
+    'beautifusoup4',
+]
+
+keywords = ["letterboxd", "films", "movies"]
+classifiers = ["Development Status :: 3 - Alpha",
+			   "License :: OSI Approved :: MIT License",
+]			   
+
+[project.urls]
+Repository = "https://github.com/JinEnMok/lttrpy"
+
+[project.optional-dependencies]
+fast = ['lxml', 'faust-cchardet']
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+lttrpy = "lttrpy:main"
