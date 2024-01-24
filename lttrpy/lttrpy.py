@@ -4,10 +4,16 @@
 # Copyright (c) 2024 Said Sattarov
 # See https://mit-license.org/ for the full text of the license
 
-# Inspired by Sena Bayram
+# Inspired by Sena Bayram's script
 
 # TODO: different output formats, common ratings, concurrency, dsiplay film year, output sorting
+# TODO: display only liked
+# TODO: display only common ratings
+# TODO: more verbosity during stages
+# TODO: interactive mode
+# TODO: a prettier table?
 
+# TODO: replace importlib
 
 import argparse
 import importlib.util
@@ -53,7 +59,7 @@ class LetterboxdProfile:
         self.film_names = tuple(film for soup in self.__soups
                                      for film in self.__get_film_names(soup))
 
-        self.ratings = tuple(self.__compose_rating(snip) for snip in self.__snippets)
+        self.ratings = tuple(self.__get_rating(snip) for snip in self.__snippets)
         self.likes = tuple(self.__get_likes(snip) for snip in self.__snippets)
         self.film_data = dict(zip(self.ids,
                                   zip(self.film_names,
@@ -125,7 +131,7 @@ class LetterboxdProfile:
     def __get_ids(self, soup):
         return (film["data-film-id"] for film in soup.find_all("div"))
 
-    def __compose_rating(self, snippet):
+    def __get_rating(self, snippet):
         if snippet.find("span") and snippet.find(class_="rating"):
             rating = snippet.find("span").attrs["class"][-1].removeprefix("rated-") \
                      + "/10"
@@ -180,7 +186,7 @@ def main():
 
     if not importlib.util.find_spec("cchardet"):
         if args.verbose:
-            print("The cchardet library can make this script faster.\n")
+            print("The faust-cchardet library can make this script faster.\n")
 
     with requests.Session() as session:
         profiles = tuple(LetterboxdProfile(user,

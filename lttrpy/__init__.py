@@ -1,0 +1,1 @@
+from .lttrpy import main
