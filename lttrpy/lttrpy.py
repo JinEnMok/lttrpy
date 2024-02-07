@@ -6,14 +6,17 @@
 
 # Inspired by Sena Bayram's script
 
-# TODO: different output formats, common ratings, concurrency, dsiplay film year, output sorting
+# TODO: different output formats, common ratings, concurrency, display film year, output sorting
 # TODO: display only liked
 # TODO: display only common ratings
+# TODO: display reviews
 # TODO: more verbosity during stages
 # TODO: interactive mode
 # TODO: a prettier table?
 
 # TODO: replace importlib
+
+# concurrency: https://realpython.com/python-download-file-from-url/#using-the-asynchronous-aiohttp-library
 
 import argparse
 import importlib.util
@@ -115,8 +118,8 @@ class LetterboxdProfile:
         page_url = "https://letterboxd.com/" \
                     + self.username \
                     + "/films/page/"
-        return (self.session.get(page_url + str(ii)).text
-                for ii in range(1, 1 + self.__get_max_page()))
+        return (self.session.get(page_url + str(page_num)).text
+                for page_num in range(1, 1 + self.__get_max_page()))
 
     def __soupify(self):
         return (BeautifulSoup(page,
@@ -168,14 +171,14 @@ def get_args():
 
     parser.add_argument("users",
                         type=str,
-                        # action="append",
+                        action="append",
                         nargs="+")
 
     return parser.parse_args()
 
 def main():
     args = get_args()
-
+    
     if importlib.util.find_spec("lxml"):
         parser = "lxml"
     else:
