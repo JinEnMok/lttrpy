@@ -101,12 +101,10 @@ class LetterboxdProfile:
 
     # TODO: find a way to reuse this page
     def __get_max_page(self):
-        page = self.session.get("https://letterboxd.com/"
-                                + self.username
-                                + "/films/")
+        page = self.session.get(f"https://letterboxd.com/{self.username}/films")
         if page.status_code != 200:
             # TODO: implement a more graceful skip
-            print(f"Could not find {user}'s page. Exiting")
+            print(f"Could not find {self.username}'s page. Exiting")
             quit()
         soup = BeautifulSoup(page.text,
                              self.parser,
@@ -115,9 +113,7 @@ class LetterboxdProfile:
 
     # TODO: make this faster
     def get_pages(self):
-        page_url = "https://letterboxd.com/" \
-                    + self.username \
-                    + "/films/page/"
+        page_url = f"https://letterboxd.com/{self.username}/films/page/"
         return (self.session.get(page_url + str(page_num)).text
                 for page_num in range(1, 1 + self.__get_max_page()))
 
@@ -171,7 +167,7 @@ def get_args():
 
     parser.add_argument("users",
                         type=str,
-                        action="append",
+                        # action="append",
                         nargs="+")
 
     return parser.parse_args()

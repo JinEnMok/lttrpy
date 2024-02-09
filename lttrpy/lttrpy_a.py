@@ -6,7 +6,7 @@
 
 # Inspired by Sena Bayram's script
 
-# TODO: different output formats, common ratings, display film year, output sorting
+# TODO: different output formats, common ratings,  film year, output sorting
 # TODO: display only liked
 # TODO: display only common ratings
 # TODO: display reviews
@@ -18,22 +18,49 @@ import trio
 # import httpx
 from httpx import AsyncClient
 import lxml
+import sys
+
 
 if not (sys.version_info[0] >= 3 and sys.version_info[1] >= 9):
     print("This script requires Python 3.9 or newer to run. Exiting.")
     quit()
+
+ALL_FILMS = {}
+
+
+class LetterboxdFilm:
+    def __init__(self,
+                 film_id,
+                 session=None,
+                 ratings=[],
+                 reviews=[],
+                 liked=set()):
+
+        self.id = film_id
+        self.session = session
+        # get title here
+        self.title = None
+        # also get film year
+        self.year = None
+        self.watched_by = set()
+
+        def add_user(self, user):
+            if user not in self.watched_by:
+                self.watched_by.add(user)
+                self.update(self, user)
+
+        def update(self, username):
+            FILM_PAGE = f"https://letterboxd.com/{username}/film/the-love-witch/"
+            pass
 
 
 class LetterboxdProfile:
     def __init__(self,
                  username,
                  session):
-                 
+
         self.username = username
         self.session = session
-        self.parser = parser
-
-    LTTR_PAGE = "https://letterboxd.com/{}/films/page/{}"
 
     def __len__(self):
         return len(self.film_data)
@@ -66,6 +93,5 @@ class LetterboxdProfile:
         return len(self.film_data) > 0
 
     def get_page(self, pagenum):
-        return await self.session.get(LTTR_PAGE.format(username, pagenum)).text()
-
-    
+        LIST_PAGE = "https://letterboxd.com/{}/films/page/{}"
+        return await self.session.get(LIST_PAGE.format(self.username, pagenum)).text()
