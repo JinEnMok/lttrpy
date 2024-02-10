@@ -15,15 +15,14 @@
 # TODO: a prettier table?
 
 import trio
-# import httpx
 from httpx import AsyncClient
 import lxml
 import sys
 
 
-if not (sys.version_info[0] >= 3 and sys.version_info[1] >= 9):
-    print("This script requires Python 3.9 or newer to run. Exiting.")
-    quit()
+assert sys.version_info[0] >= 3 and sys.version_info[1] >= 9, \
+    "This script requires Python 3.9 or newer to run. Exiting."
+
 
 ALL_FILMS = {}
 
@@ -36,7 +35,9 @@ class LetterboxdFilm:
                  reviews=[],
                  liked=set()):
 
-        self.id = film_id
+        self.string_id = film_id
+        self.film_page = f"https://letterboxd.com/film/{self.string_id}"
+        self.tvdb_id = None
         self.session = session
         # get title here
         self.title = None
@@ -44,14 +45,20 @@ class LetterboxdFilm:
         self.year = None
         self.watched_by = set()
 
-        def add_user(self, user):
-            if user not in self.watched_by:
-                self.watched_by.add(user)
-                self.update(self, user)
+    def __repr__(self):
+        return f"Film({self.title!r})"
 
-        def update(self, username):
-            FILM_PAGE = f"https://letterboxd.com/{username}/film/the-love-witch/"
-            pass
+    def __str__(self):
+        return f"{self.title} ({self.year})"
+
+    def add_user(self, user):
+        if user not in self.watched_by:
+            self.watched_by.add(user)
+            self.update(self, user)
+            print(f"{self.title} ({self.year}) watched by {user}")
+
+    def update(self, username):
+        pass
 
 
 class LetterboxdProfile:
@@ -60,37 +67,24 @@ class LetterboxdProfile:
                  session):
 
         self.username = username
+        self.link = f"https://letterboxd.com/{self.username}"
         self.session = session
-
-    def __len__(self):
-        return len(self.film_data)
-
-    def __str__(self):
-        return f"User {self.username}: {len(self)} watched films."
+        self.films_watched = dict()
 
     def __repr__(self):
         return f"Profile({self.username!r})"
 
-    def __eq__(self, other):
-        return self.film_data == other.film_data
-
-    def __ne__(self, other):
-        return self.film_data != other.film_data
-
     def __getitem__(self, key):
         if type(key) is str:
-            return self.film_data[key]
+            return self.films_watched[key]
         elif type(key) in (slice, int):
-            return tuple(self.film_data.values())[key]
+            return tuple(self.films_watched.values())[key]
 
     def __iter__(self):
-        return iter(self.film_data)
+        return iter(self.films_watched)
 
     def __contains__(self, item):
-        return item in self.film_data
-
-    def __bool__(self):
-        return len(self.film_data) > 0
+        return item in self.films_watched
 
     def get_page(self, pagenum):
         LIST_PAGE = "https://letterboxd.com/{}/films/page/{}"

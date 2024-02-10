@@ -14,16 +14,10 @@
 # TODO: interactive mode
 # TODO: a prettier table?
 
-# TODO: replace importlib
-
-# concurrency: https://realpython.com/python-download-file-from-url/#using-the-asynchronous-aiohttp-library
-
 import argparse
 import importlib.util
 import os
 import sys
-
-# from concurrent.futures import ThreadPoolExecutor
 
 
 if not (sys.version_info[0] >= 3 and sys.version_info[1] >= 9):
@@ -44,7 +38,7 @@ class LetterboxdProfile:
                  session,
                  parser,
                  verb=False, quiet=False):
-                 
+
         self.username = username
         self.session = session
         self.parser = parser
