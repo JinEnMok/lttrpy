@@ -16,7 +16,7 @@
 
 import trio
 from httpx import AsyncClient
-import lxml
+from lxml import html
 import sys
 
 
@@ -25,6 +25,14 @@ assert sys.version_info[0] >= 3 and sys.version_info[1] >= 9, \
 
 
 ALL_FILMS = {}
+
+
+async def get_page(session, url):
+    """
+    General-purpose async page-downloading function
+    """
+    async with session.get(url) as page:
+        return await page.text()
 
 
 class LetterboxdFilm:
@@ -89,3 +97,11 @@ class LetterboxdProfile:
     def get_page(self, pagenum):
         LIST_PAGE = "https://letterboxd.com/{}/films/page/{}"
         return await self.session.get(LIST_PAGE.format(self.username, pagenum)).text()
+
+
+def main():
+    pass
+
+
+if __name__ == "__main__":
+    trio.run(main())
