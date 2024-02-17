@@ -15,6 +15,7 @@
 # TODO: a prettier table?
 
 import trio
+# h2 needs to be present because we're making extensive use of it here
 from httpx import AsyncClient
 from lxml import html
 import sys
@@ -22,9 +23,6 @@ import sys
 
 assert sys.version_info[0] >= 3 and sys.version_info[1] >= 9, \
     "This script requires Python 3.9 or newer to run. Exiting."
-
-
-ALL_FILMS = {}
 
 
 async def get_page(session, url):
@@ -36,6 +34,7 @@ async def get_page(session, url):
 
 
 class LetterboxdFilm:
+    # will work on this later
     def __init__(self,
                  film_id,
                  session=None,
@@ -46,12 +45,15 @@ class LetterboxdFilm:
         self.string_id = film_id
         self.film_page = f"https://letterboxd.com/film/{self.string_id}"
         self.tvdb_id = None
+        # it's more of a client if we're using httpx but whatever
         self.session = session
         # get title here
         self.title = None
         # also get film year
         self.year = None
         self.watched_by = set()
+        self.ratings = ratings
+        self.reviews = reviews
 
     def __repr__(self):
         return f"Film({self.title!r})"
@@ -64,6 +66,12 @@ class LetterboxdFilm:
             self.watched_by.add(user)
             self.update(self, user)
             print(f"{self.title} ({self.year}) watched by {user}")
+
+    async def get_review(self, username):
+        page = await get_page(self.session, 
+                              f'https://letterboxd.com/{username}/film/{self.string_id}')
+        tree = html.document_fromstring(page.text)
+        review = tree.xpath("/html/head/meta[4]")[0].get('content')
 
     def update(self, username):
         pass
@@ -98,9 +106,14 @@ class LetterboxdProfile:
         LIST_PAGE = "https://letterboxd.com/{}/films/page/{}"
         return await self.session.get(LIST_PAGE.format(self.username, pagenum)).text()
 
+    # def 
+
 
 def main():
-    pass
+    async with AsyncClient(http2=True, follow_redirects=True) as client:
+        ALL_FILMS = {}
+        users = (user1, user2)
+        profiles = [LetterboxdProfile(user, client) for user in users]
 
 
 if __name__ == "__main__":
