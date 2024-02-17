@@ -117,4 +117,4 @@ def main():
 
 
 if __name__ == "__main__":
-    trio.run(main())
+    trio.run(main)

@@ -1,0 +1,3 @@
+lxml
+trio
+httpx[http2]
