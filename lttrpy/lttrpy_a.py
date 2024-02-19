@@ -163,35 +163,48 @@ class LetterboxdProfile:
         #     if film["reviewed"]
         # }
 
-# def format_output(profiles):
-#     common_ids = profiles[0].overlap(*profiles)
 
-#     #flexible column width
-#     #some magic numbers here, tune according to taste
-#     col_w = {"film":(max(len(profiles[0].film_data[film_id][0]) for film_id in common_ids) + 5)}
-#     for user in args.users:
-#         col_w.update({user:(max(len(f"{user}'s rating") + 5, len("no rating" + "(liked)") + 5))})
+def format_output(profiles):
+    common_ids = profiles[0].overlap(*profiles)
 
+    # flexible column width
+    # some magic numbers here, tune according to taste
+    col_w = {
+        "film": (
+            max(len(profiles[0].film_data[film_id][0]) for film_id in common_ids) + 5
+        )
+    }
+    for user in args.users:
+        col_w.update(
+            {user: (max(len(f"{user}'s rating") + 5, len("no rating" + "(liked)") + 5))}
+        )
 
-#     with open(args.output, "w", encoding="utf-8") as f:
-#         f.write(f"There are {len(common_ids)} common films for those users.\n")
-#         f.write("n/r stands for 'no rating'\n\n")
+    with open(args.output, "w", encoding="utf-8") as f:
+        f.write(f"There are {len(common_ids)} common films for those users.\n")
+        f.write("n/r stands for 'no rating'\n\n")
 
-#         f.write("Film name".ljust(col_w["film"]))
+        f.write("Film name".ljust(col_w["film"]))
 
-#         for user in args.users:
-#             f.write(f"{user}'s rating".center(col_w[user]))
-#         f.write("\n\n")
+        for user in args.users:
+            f.write(f"{user}'s rating".center(col_w[user]))
+        f.write("\n\n")
 
-#         # TODO: alphabetic (or other) ordering for the films
-#         for film_id in common_ids:
-#             f.write(profiles[0].film_data[film_id][0].ljust(col_w["film"]))
-#             for user in profiles:
-#                 if user.film_data[film_id][2]:
-#                     f.write(f"{user.film_data[film_id][1]} (liked)".center(col_w[user.username]))
-#                 else:
-#                     f.write(f"{user.film_data[film_id][1]}".center(col_w[user.username]))
-#             f.write("\n")
+        # TODO: alphabetic (or other) ordering for the films
+        for film_id in common_ids:
+            f.write(profiles[0].film_data[film_id][0].ljust(col_w["film"]))
+            for user in profiles:
+                if user.film_data[film_id][2]:
+                    f.write(
+                        f"{user.film_data[film_id][1]} (liked)".center(
+                            col_w[user.username]
+                        )
+                    )
+                else:
+                    f.write(
+                        f"{user.film_data[film_id][1]}".center(col_w[user.username])
+                    )
+            f.write("\n")
+
 
 async def main():
     async with AsyncClient(http2=True, follow_redirects=True) as client:

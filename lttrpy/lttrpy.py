@@ -33,11 +33,7 @@ except ImportError:
 
 
 class LetterboxdProfile:
-    def __init__(self,
-                 username,
-                 session,
-                 parser,
-                 verb=False, quiet=False):
+    def __init__(self, username, session, parser, verb=False, quiet=False):
 
         self.username = username
         self.session = session
@@ -47,21 +43,23 @@ class LetterboxdProfile:
         # gotta come up with a creative way to iterate over them
         self.__pages = self.get_pages()
         self.__soups = tuple(self.__soupify())
-        self.__snippets = tuple(snip for soup in self.__soups
-                                     for snip in soup.find_all("p", class_="poster-viewingdata"))
+        self.__snippets = tuple(
+            snip
+            for soup in self.__soups
+            for snip in soup.find_all("p", class_="poster-viewingdata")
+        )
 
-        self.ids = tuple(id for soup in self.__soups
-                            for id in self.__get_ids(soup))
+        self.ids = tuple(id for soup in self.__soups for id in self.__get_ids(soup))
 
-        self.film_names = tuple(film for soup in self.__soups
-                                     for film in self.__get_film_names(soup))
+        self.film_names = tuple(
+            film for soup in self.__soups for film in self.__get_film_names(soup)
+        )
 
         self.ratings = tuple(self.__get_rating(snip) for snip in self.__snippets)
         self.likes = tuple(self.__get_likes(snip) for snip in self.__snippets)
-        self.film_data = dict(zip(self.ids,
-                                  zip(self.film_names,
-                                      self.ratings,
-                                      self.likes)))
+        self.film_data = dict(
+            zip(self.ids, zip(self.film_names, self.ratings, self.likes))
+        )
 
     def __len__(self):
         return len(self.film_data)
@@ -84,7 +82,7 @@ class LetterboxdProfile:
         elif type(key) in (slice, int):
             return tuple(self.film_data.values())[key]
 
-    #def __iter__(self):
+    # def __iter__(self):
     #    return iter(self.film_data)
 
     def __contains__(self, item):
@@ -100,22 +98,26 @@ class LetterboxdProfile:
             # TODO: implement a more graceful skip
             print(f"Could not find {self.username}'s page. Exiting")
             quit()
-        soup = BeautifulSoup(page.text,
-                             self.parser,
-                             parse_only=SoupStrainer(class_="paginate-page"))
+        soup = BeautifulSoup(
+            page.text, self.parser, parse_only=SoupStrainer(class_="paginate-page")
+        )
         return int(tuple(soup.strings)[-1])
 
     # TODO: make this faster
     def get_pages(self):
         page_url = f"https://letterboxd.com/{self.username}/films/page/"
-        return (self.session.get(page_url + str(page_num)).text
-                for page_num in range(1, 1 + self.__get_max_page()))
+        return (
+            self.session.get(page_url + str(page_num)).text
+            for page_num in range(1, 1 + self.__get_max_page())
+        )
 
     def __soupify(self):
-        return (BeautifulSoup(page,
-                              self.parser,
-                              parse_only=SoupStrainer(class_="poster-container"))
-                for page in self.__pages)
+        return (
+            BeautifulSoup(
+                page, self.parser, parse_only=SoupStrainer(class_="poster-container")
+            )
+            for page in self.__pages
+        )
 
     # TODO: make this faster
     def __get_film_names(self, soup):
@@ -126,8 +128,9 @@ class LetterboxdProfile:
 
     def __get_rating(self, snippet):
         if snippet.find("span") and snippet.find(class_="rating"):
-            rating = snippet.find("span").attrs["class"][-1].removeprefix("rated-") \
-                     + "/10"
+            rating = (
+                snippet.find("span").attrs["class"][-1].removeprefix("rated-") + "/10"
+            )
         else:
             rating = "n/r"
         return rating
@@ -146,56 +149,70 @@ def get_args():
     parser = argparse.ArgumentParser()
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("-v", "--verbose",
-                        help="increase output verbosity",
-                        action="store_true")
-    group.add_argument("-q", "--quiet",
-                        help='print output to stdout',
-                        action="store_true")
+    group.add_argument(
+        "-v", "--verbose", help="increase output verbosity", action="store_true"
+    )
+    group.add_argument(
+        "-q", "--quiet", help="print output to stdout", action="store_true"
+    )
 
-    parser.add_argument("-f", "--file",
-                        dest="output",
-                        nargs="?",
-                        help="name and path of the output file",
-                        default="common films.txt")
+    parser.add_argument(
+        "-f",
+        "--file",
+        dest="output",
+        nargs="?",
+        help="name and path of the output file",
+        default="common films.txt",
+    )
 
-    parser.add_argument("users",
-                        type=str,
-                        # action="append",
-                        nargs="+")
+    parser.add_argument(
+        "users",
+        type=str,
+        # action="append",
+        nargs="+",
+    )
 
     return parser.parse_args()
 
+
 def main():
     args = get_args()
-    
+
     if importlib.util.find_spec("lxml"):
         parser = "lxml"
     else:
         parser = "html.parser"
         if args.verbose:
-            print("lxml not found. Using html.parser instead.\n"
-                  + "lxml is a significantly faster alternative.\n")
+            print(
+                "lxml not found. Using html.parser instead.\n"
+                + "lxml is a significantly faster alternative.\n"
+            )
 
     if not importlib.util.find_spec("cchardet"):
         if args.verbose:
             print("The faust-cchardet library can make this script faster.\n")
 
     with requests.Session() as session:
-        profiles = tuple(LetterboxdProfile(user,
-                                           session,
-                                           parser=parser,
-                                           verb=args.verbose,
-                                           quiet=args.quiet) for user in args.users)
+        profiles = tuple(
+            LetterboxdProfile(
+                user, session, parser=parser, verb=args.verbose, quiet=args.quiet
+            )
+            for user in args.users
+        )
 
     common_ids = profiles[0].overlap(*profiles)
 
-    #flexible column width
-    #some magic numbers here, tune according to taste
-    col_w = {"film":(max(len(profiles[0].film_data[film_id][0]) for film_id in common_ids) + 5)}
+    # flexible column width
+    # some magic numbers here, tune according to taste
+    col_w = {
+        "film": (
+            max(len(profiles[0].film_data[film_id][0]) for film_id in common_ids) + 5
+        )
+    }
     for user in args.users:
-        col_w.update({user:(max(len(f"{user}'s rating") + 5, len("no rating" + "(liked)") + 5))})
-
+        col_w.update(
+            {user: (max(len(f"{user}'s rating") + 5, len("no rating" + "(liked)") + 5))}
+        )
 
     with open(args.output, "w", encoding="utf-8") as f:
         f.write(f"There are {len(common_ids)} common films for those users.\n")
@@ -212,9 +229,15 @@ def main():
             f.write(profiles[0].film_data[film_id][0].ljust(col_w["film"]))
             for user in profiles:
                 if user.film_data[film_id][2]:
-                    f.write(f"{user.film_data[film_id][1]} (liked)".center(col_w[user.username]))
+                    f.write(
+                        f"{user.film_data[film_id][1]} (liked)".center(
+                            col_w[user.username]
+                        )
+                    )
                 else:
-                    f.write(f"{user.film_data[film_id][1]}".center(col_w[user.username]))
+                    f.write(
+                        f"{user.film_data[film_id][1]}".center(col_w[user.username])
+                    )
             f.write("\n")
 
         if args.verbose:
