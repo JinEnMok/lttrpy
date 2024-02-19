@@ -6,7 +6,7 @@
 
 # Inspired by Sena Bayram's script
 
-# TODO: different output formats, common ratings,  film year, output sorting
+# TODO: different output formats, common ratings, film year, output sorting
 # TODO: display only liked
 # TODO: display only common ratings
 # TODO: display reviews
@@ -25,14 +25,6 @@ import sys
 assert (
     sys.version_info[0] >= 3 and sys.version_info[1] >= 9
 ), "This script requires Python 3.9 or newer to run. Exiting."
-
-
-async def get_page(session, url):
-    """
-    General-purpose async page-downloading function
-    """
-    async with session.get(url) as page:
-        return await page.text()
 
 
 class LetterboxdFilm:
@@ -91,7 +83,6 @@ class LetterboxdFilm:
 
 class LetterboxdProfile:
     def __init__(self, username, session):
-
         self.username = username
         self.link = f"https://letterboxd.com/{self.username}"
         self.session = session
@@ -112,9 +103,12 @@ class LetterboxdProfile:
     def __contains__(self, item):
         return item in self.films_watched
 
-    async def get_review(session, username, film):
+    def __len__(self):
+        return len(self.films_watched)
+
+    async def get_review(self, film):
         REVIEW_PAGE = "https://letterboxd.com/{}/film/{}/"
-        page = (await session.get(REVIEW_PAGE.format(username, film))).text
+        page = (await self.session.get(REVIEW_PAGE.format(self.username, film))).text
         tree = html.document_fromstring(page)
         spoiler = (
             True
@@ -122,7 +116,7 @@ class LetterboxdProfile:
                 "This review may contain spoilers"
                 in tree.xpath("//meta[@name='description'][1]")[0].get("content")
             )
-            else None
+            else False
         )
         review = "\n".join(
             tree.xpath(
@@ -131,7 +125,7 @@ class LetterboxdProfile:
         )
         return spoiler, review
 
-    def find_films(page):
+    def find_films(self, page):
         films = {
             node.xpath("./div")[0].get("data-film-slug"): {
                 "html": node,
@@ -144,25 +138,69 @@ class LetterboxdProfile:
         }
         return films
 
-    async def get_all_pages(session, username):
-        page1 = await get_page(session, username, 1)
+    async def get_all_pages(self):
+        page1 = await self.get_user_page(1)
         last_page = int(page1.xpath("//li[@class='paginate-page'][3]/a/text()")[0])
         return [page1] + [
-            (await get_page(session, username, page))
-            for page in range(2, last_page + 1)
+            (await self.get_user_page(page)) for page in range(2, last_page + 1)
         ]
 
-    async def get_page(session, username, pagenum):
+    async def get_user_page(self, pagenum):
         LIST_PAGE = "https://letterboxd.com/{}/films/page/{}"
-        page = (await session.get(LIST_PAGE.format(username, pagenum))).text
+        page = (await self.session.get(LIST_PAGE.format(self.username, pagenum))).text
         return html.document_fromstring(page)
 
+    async def update(self):
+        self.films_watched = {
+            film: data
+            for page in await self.get_all_pages()
+            for film, data in self.find_films(page).items()
+        }
+        # self.reviews = {
+        #     film: review
+        #     for film in self.films_watched
+        #     for _, review in await self.get_review(film)
+        #     if film["reviewed"]
+        # }
+
+# def format_output(profiles):
+#     common_ids = profiles[0].overlap(*profiles)
+
+#     #flexible column width
+#     #some magic numbers here, tune according to taste
+#     col_w = {"film":(max(len(profiles[0].film_data[film_id][0]) for film_id in common_ids) + 5)}
+#     for user in args.users:
+#         col_w.update({user:(max(len(f"{user}'s rating") + 5, len("no rating" + "(liked)") + 5))})
+
+
+#     with open(args.output, "w", encoding="utf-8") as f:
+#         f.write(f"There are {len(common_ids)} common films for those users.\n")
+#         f.write("n/r stands for 'no rating'\n\n")
+
+#         f.write("Film name".ljust(col_w["film"]))
+
+#         for user in args.users:
+#             f.write(f"{user}'s rating".center(col_w[user]))
+#         f.write("\n\n")
+
+#         # TODO: alphabetic (or other) ordering for the films
+#         for film_id in common_ids:
+#             f.write(profiles[0].film_data[film_id][0].ljust(col_w["film"]))
+#             for user in profiles:
+#                 if user.film_data[film_id][2]:
+#                     f.write(f"{user.film_data[film_id][1]} (liked)".center(col_w[user.username]))
+#                 else:
+#                     f.write(f"{user.film_data[film_id][1]}".center(col_w[user.username]))
+#             f.write("\n")
 
 async def main():
     async with AsyncClient(http2=True, follow_redirects=True) as client:
-        ALL_FILMS = {}
-        users = (user1, user2)
+        users = sys.argv[1:]
+        print(f"Users: {users}")
         profiles = [LetterboxdProfile(user, client) for user in users]
+        for profile in profiles:
+            await profile.update()
+            print(len(profile))
 
 
 if __name__ == "__main__":
