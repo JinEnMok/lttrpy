@@ -6,20 +6,26 @@
 
 # Inspired by Sena Bayram's script
 
-# TODO: different output formats, common ratings, film year, output sorting
-# TODO: display only liked
-# TODO: display only common ratings
-# TODO: display reviews
+# TODO: optional: different output formats, common ratings, film year, output sorting
+# film year's gonna be tricky since the users' film galleries don't contain it and often neither do
+# their review pages, meaning we'd have to parse the film's own page
+# TODO: optional: display only liked
+# TODO: optional: display only common ratings
+# TODO: optional: display reviews
+# TODO: optional: interactive mode
 # TODO: more verbosity during stages
-# TODO: interactive mode
-# TODO: a prettier table?
+# TODO: a prettier table? (screw that I'm not importing another damn dependancy into this)
 
+# probably should rewrite this so that profiles contain instances of the film class
+# but who's got the time
+
+
+import sys
 import trio
 
 # h2 needs to be present because we're making extensive use of it here
 from httpx import AsyncClient
 from lxml import html
-import sys
 
 
 assert (
@@ -164,7 +170,10 @@ class LetterboxdProfile:
         # }
 
 
-def format_output(profiles):
+def format_output(profiles, outfile):
+    """
+    The fuck is going on here :'(
+    """
     common_ids = profiles[0].overlap(*profiles)
 
     # flexible column width
@@ -174,19 +183,20 @@ def format_output(profiles):
             max(len(profiles[0].film_data[film_id][0]) for film_id in common_ids) + 5
         )
     }
-    for user in args.users:
+    for profile in profiles:
+        user = profile.username
         col_w.update(
             {user: (max(len(f"{user}'s rating") + 5, len("no rating" + "(liked)") + 5))}
         )
 
-    with open(args.output, "w", encoding="utf-8") as f:
+    with open(outfile, "w", encoding="utf-8") as f:
         f.write(f"There are {len(common_ids)} common films for those users.\n")
         f.write("n/r stands for 'no rating'\n\n")
 
         f.write("Film name".ljust(col_w["film"]))
 
-        for user in args.users:
-            f.write(f"{user}'s rating".center(col_w[user]))
+        for user in profiles:
+            f.write(f"{user.username}'s rating".center(col_w[user.username]))
         f.write("\n\n")
 
         # TODO: alphabetic (or other) ordering for the films
