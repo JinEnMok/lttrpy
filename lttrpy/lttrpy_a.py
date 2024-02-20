@@ -21,14 +21,18 @@
 
 
 import sys
+import asyncio
 
+if sys.platform[:4] in ("linux", "darwin"):
+    try:
+        import uvloop
 
-# import trio as asyn
-import asyncio as asyn
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    except ImportError:
+        print("uvloop library not found. It could make the code run faster.")
+        pass
 
-# h2 needs to be present because we're making extensive use of it here
-# from httpx import AsyncClient as ClientSession
-from aiohttp import ClientSession as ClientSession
+from aiohttp import ClientSession, ClientResponseError
 from lxml import html
 
 
@@ -99,7 +103,7 @@ class LetterboxdProfile:
         self.films = dict()
 
     def __repr__(self):
-        return f"Profile({self.username!r})"
+        return f"LetterboxdProfile({self.username!r})"
 
     def __getitem__(self, key):
         if type(key) is str:
@@ -117,11 +121,22 @@ class LetterboxdProfile:
         return len(self.films)
 
     def __add__(self, *others):
-        return self.commons(self, *others)
+        return self.common(self, *others)
 
-    @classmethod
-    def commons(*profiles):
-        return set.intersection(*profiles)
+    @staticmethod
+    async def exists(username, session):
+        try:
+            await session.get(
+                f"https://letterboxd.com/{username}", raise_for_status=True
+            )
+            print(f"Found user {username}")
+            return username
+        except ClientResponseError:
+            print(f"User {username} not found.")
+
+    @staticmethod
+    def common(*profiles):
+        return set.intersection(*(prof.films.keys() for prof in profiles))
 
     async def get_review(self, film):
         REVIEW_PAGE = "https://letterboxd.com/{}/film/{}/"
@@ -158,7 +173,8 @@ class LetterboxdProfile:
 
     async def get_all_pages(self):
         page1 = await self.get_user_page(1)
-        last_page = int(page1.xpath("//li[@class='paginate-page'][3]/a/text()")[0])
+        # TODO: make a fix for when there are only 2 pages
+        last_page = int(page1.xpath("//li[@class='paginate-page'][last()]/a/text()")[0])
         return [page1] + [
             (await self.get_user_page(page)) for page in range(2, last_page + 1)
         ]
@@ -181,13 +197,14 @@ class LetterboxdProfile:
         #     for _, review in await self.get_review(film)
         #     if film["reviewed"]
         # }
+        print(f"{self.username}: {len(self)} films")
 
 
 def format_output(profiles, outfile):
     """
     The fuck is going on here :'(
     """
-    common_ids = profiles[0].overlap(*profiles)
+    common_ids = LetterboxdProfile.common(*profiles)
 
     # flexible column width
     # some magic numbers here, tune according to taste
@@ -195,20 +212,14 @@ def format_output(profiles, outfile):
     col_w = {
         "film": (
             FILM_PADDING
-            + max(len(profiles[0].get(film_id)['title']) for film_id in common_ids)
+            + max(len(profiles[0].get(film_id)["title"]) for film_id in common_ids)
         )
     }
 
     USER_PADDING = 5 + 9  # the 9 accounts for the word "rating" itself
     for profile in profiles:
         user = profile.username
-        col_w.update(
-            {
-                user: USER_PADDING
-                + (max(len(f"{user}"),
-                       len("(liked)")))
-            }
-        )
+        col_w.update({user: USER_PADDING + (max(len(f"{user}"), len("(liked)")))})
 
     with open(outfile, "w", encoding="utf-8") as f:
         f.write(f"There are {len(common_ids)} common films for those users.\n")
@@ -237,16 +248,24 @@ def format_output(profiles, outfile):
             f.write("\n")
 
 
+# markdown table format is like so
+# | Tables   |      Are      |  Cool |
+# |----------|:-------------:|------:|
+# | col 1 is |  left-aligned | $1600 |
+# | col 2 is |    centered   |   $12 |
+# | col 3 is | right-aligned |    $1 |
+
+
 async def main():
-    # async with ClientSession(http2=True, follow_redirects=True) as client:
-    async with ClientSession() as client:
-        users = sys.argv[1:]
+    async with ClientSession(raise_for_status=True) as client:
+        users = [await LetterboxdProfile.exists(user, client) for user in sys.argv[1:]]
         print(f"Users: {users}")
         profiles = [LetterboxdProfile(user, client) for user in set(users)]
-        for profile in profiles:
-            await profile.update()
-            print(f"{profile.username}: {len(profile)} films")
+        tasks = (profile.update() for profile in profiles)
+        await asyncio.gather(*tasks)
+
+        print(LetterboxdProfile.common(*profiles))
 
 
 if __name__ == "__main__":
-    asyn.run(main())
+    asyncio.run(main())
