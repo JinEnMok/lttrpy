@@ -14,17 +14,21 @@
 # TODO: optional: display reviews
 # TODO: optional: interactive mode
 # TODO: more verbosity during stages
-# TODO: a prettier table? (screw that I'm not importing another damn dependancy into this)
+# TODO: a prettier table? (screw that I'm not importing another damn dependency into this)
 
 # probably should rewrite this so that profiles contain instances of the film class
 # but who's got the time
 
 
 import sys
-import trio
+
+
+# import trio as asyn
+import asyncio as asyn
 
 # h2 needs to be present because we're making extensive use of it here
-from httpx import AsyncClient
+# from httpx import AsyncClient as ClientSession
+from aiohttp import ClientSession as ClientSession
 from lxml import html
 
 
@@ -114,7 +118,8 @@ class LetterboxdProfile:
 
     async def get_review(self, film):
         REVIEW_PAGE = "https://letterboxd.com/{}/film/{}/"
-        page = (await self.session.get(REVIEW_PAGE.format(self.username, film))).text
+        async with self.session.get(REVIEW_PAGE.format(self.username, film)) as resp:
+            page = await resp.text()
         tree = html.document_fromstring(page)
         spoiler = (
             True
@@ -153,7 +158,8 @@ class LetterboxdProfile:
 
     async def get_user_page(self, pagenum):
         LIST_PAGE = "https://letterboxd.com/{}/films/page/{}"
-        page = (await self.session.get(LIST_PAGE.format(self.username, pagenum))).text
+        async with self.session.get(LIST_PAGE.format(self.username, pagenum)) as resp:
+            page = await resp.text()
         return html.document_fromstring(page)
 
     async def update(self):
@@ -178,15 +184,23 @@ def format_output(profiles, outfile):
 
     # flexible column width
     # some magic numbers here, tune according to taste
+    FILM_PADDING = 5
     col_w = {
         "film": (
-            max(len(profiles[0].film_data[film_id][0]) for film_id in common_ids) + 5
+            FILM_PADDING
+            + max(len(profiles[0].get(film_id)['title']) for film_id in common_ids)
         )
     }
+
+    USER_PADDING = 5 + 9  # the 9 accounts for the word "rating" itself
     for profile in profiles:
         user = profile.username
         col_w.update(
-            {user: (max(len(f"{user}'s rating") + 5, len("no rating" + "(liked)") + 5))}
+            {
+                user: USER_PADDING
+                + (max(len(f"{user}"),
+                       len("(liked)")))
+            }
         )
 
     with open(outfile, "w", encoding="utf-8") as f:
@@ -217,14 +231,15 @@ def format_output(profiles, outfile):
 
 
 async def main():
-    async with AsyncClient(http2=True, follow_redirects=True) as client:
+    # async with ClientSession(http2=True, follow_redirects=True) as client:
+    async with ClientSession() as client:
         users = sys.argv[1:]
         print(f"Users: {users}")
-        profiles = [LetterboxdProfile(user, client) for user in users]
+        profiles = [LetterboxdProfile(user, client) for user in set(users)]
         for profile in profiles:
             await profile.update()
-            print(len(profile))
+            print(f"{profile.username}: {len(profile)} films")
 
 
 if __name__ == "__main__":
-    trio.run(main)
+    asyn.run(main())
