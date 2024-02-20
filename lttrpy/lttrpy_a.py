@@ -96,25 +96,32 @@ class LetterboxdProfile:
         self.username = username
         self.link = f"https://letterboxd.com/{self.username}"
         self.session = session
-        self.films_watched = dict()
+        self.films = dict()
 
     def __repr__(self):
         return f"Profile({self.username!r})"
 
     def __getitem__(self, key):
         if type(key) is str:
-            return self.films_watched[key]
+            return self.films[key]
         elif type(key) in (slice, int):
-            return tuple(self.films_watched.values())[key]
+            return tuple(self.films.values())[key]
 
     def __iter__(self):
-        return iter(self.films_watched)
+        return iter(self.films)
 
     def __contains__(self, item):
-        return item in self.films_watched
+        return item in self.films
 
     def __len__(self):
-        return len(self.films_watched)
+        return len(self.films)
+
+    def __add__(self, *others):
+        return self.commons(self, *others)
+
+    @classmethod
+    def commons(*profiles):
+        return set.intersection(*profiles)
 
     async def get_review(self, film):
         REVIEW_PAGE = "https://letterboxd.com/{}/film/{}/"
@@ -163,14 +170,14 @@ class LetterboxdProfile:
         return html.document_fromstring(page)
 
     async def update(self):
-        self.films_watched = {
+        self.films = {
             film: data
             for page in await self.get_all_pages()
             for film, data in self.find_films(page).items()
         }
         # self.reviews = {
         #     film: review
-        #     for film in self.films_watched
+        #     for film in self.films
         #     for _, review in await self.get_review(film)
         #     if film["reviewed"]
         # }
