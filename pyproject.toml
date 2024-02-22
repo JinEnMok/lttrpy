@@ -10,8 +10,8 @@ readme = "README.md"
 
 requires-python = ">=3.9"
 dependencies = [
-    "requests",
-    'beautifusoup4',
+    "aiohttp",
+    'lxml',
 ]
 
 keywords = ["letterboxd", "films", "movies"]
@@ -23,7 +23,7 @@ classifiers = ["Development Status :: 3 - Alpha",
 Repository = "https://github.com/JinEnMok/lttrpy"
 
 [project.optional-dependencies]
-fast = ['lxml', 'faust-cchardet']
+fast = ["uvloop; sys_platform=='linux' or sys_platform=='darwin'"]
 
 [build-system]
 requires = ["setuptools"]

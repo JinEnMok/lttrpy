@@ -1,3 +1,2 @@
 lxml
-trio
-httpx[http2]
+aiohttp

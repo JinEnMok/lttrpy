@@ -4,7 +4,7 @@ A CLI Python script to compare users' Letterboxd "watched" lists, with ratings a
 ### Usage
 
 ```
-python lttrpy [-h] [-v] user1 [user2 ...]
+python lttrpy user1 [user2 ...]
 ```
 
 ### Requirements
@@ -12,4 +12,5 @@ python lttrpy [-h] [-v] user1 [user2 ...]
 * Python >= 3.9
 * `aiohttp`
 * `lxml`
+  - `uvloop` - optional on Linux or MacOS, for faster async loops
   

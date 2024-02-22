@@ -29,7 +29,7 @@ if sys.platform[:4] in ("linux", "darwin"):
 
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     except ImportError:
-        print("uvloop library not found. It could make the code run faster.")
+        print("uvloop library not found. It could provide some speedups.")
         pass
 
 from aiohttp import ClientSession, ClientResponseError
@@ -48,7 +48,6 @@ class LetterboxdFilm:
         self.string_id = film_id
         self.film_page = f"https://letterboxd.com/film/{self.string_id}"
         self.tvdb_id = None
-        # it's more of a client if we're using httpx but whatever
         self.session = session
         # get title here
         self.title = None
@@ -97,7 +96,7 @@ class LetterboxdFilm:
 
 class LetterboxdProfile:
     def __init__(self, username, session):
-        self.username = username
+        self.username: str = username
         self.link = f"https://letterboxd.com/{self.username}"
         self.session = session
         self.films = dict()
@@ -135,8 +134,8 @@ class LetterboxdProfile:
             print(f"User {username} not found.")
 
     @staticmethod
-    def common(*profiles):
-        return set.intersection(*(prof.films.keys() for prof in profiles))
+    def common(*profiles) -> set:
+        return set.intersection(*(set(prof.films.keys()) for prof in profiles))
 
     async def get_review(self, film):
         REVIEW_PAGE = "https://letterboxd.com/{}/film/{}/"
@@ -158,7 +157,7 @@ class LetterboxdProfile:
         )
         return spoiler, review
 
-    def find_films(self, page):
+    def find_films(self, page) -> dict:
         films = {
             node.xpath("./div")[0].get("data-film-slug"): {
                 "html": node,
@@ -171,13 +170,15 @@ class LetterboxdProfile:
         }
         return films
 
-    async def get_all_pages(self):
+    async def get_all_pages(self) -> str:
         page1 = await self.get_user_page(1)
         # TODO: make a fix for when there are only 2 pages
         last_page = int(page1.xpath("//li[@class='paginate-page'][last()]/a/text()")[0])
-        return [page1] + [
+        pages = [page1] + [
             (await self.get_user_page(page)) for page in range(2, last_page + 1)
         ]
+        print(f"Downloaded {last_page} pages for {self.username}")
+        return pages
 
     async def get_user_page(self, pagenum):
         LIST_PAGE = "https://letterboxd.com/{}/films/page/{}"
@@ -185,8 +186,8 @@ class LetterboxdProfile:
             page = await resp.text()
         return html.document_fromstring(page)
 
-    async def update(self):
-        self.films = {
+    async def update(self) -> None:
+        self.films: dict = {
             film: data
             for page in await self.get_all_pages()
             for film, data in self.find_films(page).items()
@@ -197,74 +198,78 @@ class LetterboxdProfile:
         #     for _, review in await self.get_review(film)
         #     if film["reviewed"]
         # }
-        print(f"{self.username}: {len(self)} films")
+        print(f"Populated {self.username}'s profile with {len(self)} films")
 
 
-def format_output(profiles, outfile):
-    """
-    The fuck is going on here :'(
-    """
-    common_ids = LetterboxdProfile.common(*profiles)
+def write_output(profiles, outfile):
+    # markdown table format is like so
+    # | Tables   |      Are      |  Cool |
+    # |----------|:-------------:|------:|
+    # | col 1 is |  left-aligned | $1600 |
+    # | col 2 is |    centered   |   $12 |
+    # | col 3 is | right-aligned |    $1 |
+
+    common_films: set = LetterboxdProfile.common(*profiles)
+
+    def newline(num_lines, file_name):
+        lines: str = "\n" * num_lines
+        file_name.write(lines)
 
     # flexible column width
     # some magic numbers here, tune according to taste
-    FILM_PADDING = 5
-    col_w = {
-        "film": (
-            FILM_PADDING
-            + max(len(profiles[0].get(film_id)["title"]) for film_id in common_ids)
-        )
+    FILM_PADDING: int = 5
+    film_width: int = FILM_PADDING + max(
+        len(profiles[0][film_id]["title"]) for film_id in common_films
+    )
+
+    USER_PADDING: int = 5 + 9  # the 9 accounts for the word "rating" itself
+    user_width: int = {
+        user.username: USER_PADDING + (max(len(f"{user.username}"), 7))
+        for user in profiles
     }
 
-    USER_PADDING = 5 + 9  # the 9 accounts for the word "rating" itself
-    for profile in profiles:
-        user = profile.username
-        col_w.update({user: USER_PADDING + (max(len(f"{user}"), len("(liked)")))})
-
     with open(outfile, "w", encoding="utf-8") as f:
-        f.write(f"There are {len(common_ids)} common films for those users.\n")
-        f.write("n/r stands for 'no rating'\n\n")
+        f.write(
+            f"## {len(common_films)} common films for {', '.join(_.username for _ in profiles)}.\n\n"
+        )
 
-        f.write("Film name".ljust(col_w["film"]))
-
+        f.write("|" + "Film title".center(film_width - 2) + "|")
         for user in profiles:
-            f.write(f"{user.username}'s rating".center(col_w[user.username]))
-        f.write("\n\n")
+            f.write(f"{user.username}'s rating".center(user_width[user.username]) + "|")
+        f.write("\n")
+
+        f.write("|" + "-" * (film_width - 2) + "|")
+        for user in profiles:
+            f.write(":" + "-" * (user_width[user.username] - 2) + ":|")
+        f.write("\n")
 
         # TODO: alphabetic (or other) ordering for the films
-        for film_id in common_ids:
-            f.write(profiles[0].film_data[film_id][0].ljust(col_w["film"]))
+        for film_id in common_films:
+            f.write(
+                "|" + profiles[0].films[film_id]["title"].ljust(film_width - 2) + "|"
+            )
             for user in profiles:
-                if user.film_data[film_id][2]:
-                    f.write(
-                        f"{user.film_data[film_id][1]} (liked)".center(
-                            col_w[user.username]
-                        )
-                    )
+                if user.films[film_id]["rating"]:
+                    rating = user.films[film_id]["rating"][0]
                 else:
-                    f.write(
-                        f"{user.film_data[film_id][1]}".center(col_w[user.username])
-                    )
+                    rating = "n/r"
+
+                if user.films[film_id]["liked"]:
+                    f.write(f"{rating} (liked)".center(user_width[user.username] - 1) + "|")
+                else:
+                    f.write(rating.center(user_width[user.username] - 1) + "|")
             f.write("\n")
-
-
-# markdown table format is like so
-# | Tables   |      Are      |  Cool |
-# |----------|:-------------:|------:|
-# | col 1 is |  left-aligned | $1600 |
-# | col 2 is |    centered   |   $12 |
-# | col 3 is | right-aligned |    $1 |
+    print(f"Wrote output to {outfile}")
 
 
 async def main():
     async with ClientSession(raise_for_status=True) as client:
         users = [await LetterboxdProfile.exists(user, client) for user in sys.argv[1:]]
-        print(f"Users: {users}")
         profiles = [LetterboxdProfile(user, client) for user in set(users)]
         tasks = (profile.update() for profile in profiles)
         await asyncio.gather(*tasks)
 
-        print(LetterboxdProfile.common(*profiles))
+    write_output(profiles, f"{'_'.join(users)}.md")
 
 
 if __name__ == "__main__":
