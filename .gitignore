@@ -167,3 +167,6 @@ cython_debug/
 
 # Kate
 *.py~
+
+*.md
+!README.md
