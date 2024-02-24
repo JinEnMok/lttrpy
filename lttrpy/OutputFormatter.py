@@ -9,11 +9,11 @@ def write_markdown(profiles, outfile):
 
     Example:
 
-    |     Film title     |      user's rating        |   another user's rating   |
-    |--------------------|:-------------------------:|:-------------------------:|
-    |Another Round       |            n/r            |             n/r           |
-    |Million Dollar Baby |       ★★★★ (liked)      |             n/r           |
-    |Bana Masal Anlatma  |             n/r           |             n/r           |
+    |     Film title     |      user1's rating        |       user2's rating      |
+    |--------------------|:--------------------------:|:-------------------------:|
+    |Another Round       |             n/r            |             n/r           |
+    |Million Dollar Baby |       ★★★★ (liked)       |             n/r           |
+    |Bana Masal Anlatma  |             n/r            |             n/r           |
 
     Args:
         profiles: the user profile objects as an iterable

@@ -44,6 +44,7 @@ There's an effort to make the source tables have constant column width, but the 
     * Sort by:
         - Alphabetic order
         - Has rating/like/review
+        - Sort by numerical rating (unicode ★½ to str)
         - Common ratings
         - Film year
     * New output formats:

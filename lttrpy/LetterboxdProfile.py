@@ -3,9 +3,9 @@ from lxml import html
 
 
 class LetterboxdProfile:
-    def __init__(self, username, session):
+    def __init__(self, username: str, session):
         self.username: str = username
-        self.link = f"https://letterboxd.com/{self.username}"
+        self.link: str = f"https://letterboxd.com/{self.username}"
         self.session = session
         self.films = dict()
 
@@ -21,18 +21,15 @@ class LetterboxdProfile:
     def __iter__(self):
         return iter(self.films)
 
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         return item in self.films
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.films)
 
     def __add__(self, *others):
         return self.common(self, *others)
 
-    # in the future, maybe make this function ensure profile exists,
-    # then immediately initialise and populate it?
-    # or write a new function entirely
     @staticmethod
     async def exists(username, session):
         """
@@ -73,26 +70,6 @@ class LetterboxdProfile:
     def diff(*profiles) -> set:
         return set.difference(*(set(prof.films.keys()) for prof in profiles))
 
-    async def get_review(self, film):
-        REVIEW_PAGE = "https://letterboxd.com/{}/film/{}/"
-        async with self.session.get(REVIEW_PAGE.format(self.username, film)) as resp:
-            page = await resp.text()
-        tree = html.document_fromstring(page)
-        spoiler = (
-            True
-            if (
-                "This review may contain spoilers"
-                in tree.xpath("//meta[@name='description'][1]")[0].get("content")
-            )
-            else False
-        )
-        review = "\n".join(
-            tree.xpath(
-                "/html/body/div[1]/div/div/section/section/div[1]/div/div/p/text()"
-            )
-        )
-        return spoiler, review
-
     def find_films(self, page) -> dict:
         films = {
             node.xpath("./div")[0].get("data-film-slug"): {
@@ -108,7 +85,6 @@ class LetterboxdProfile:
 
     async def get_all_pages(self) -> str:
         page1 = await self.get_user_page(1)
-        # TODO: make a fix for when there are only 2 pages
         last_page = int(page1.xpath("//li[@class='paginate-page'][last()]/a/text()")[0])
         pages = [page1] + [
             (await self.get_user_page(page)) for page in range(2, last_page + 1)
@@ -117,8 +93,8 @@ class LetterboxdProfile:
         return pages
 
     async def get_user_page(self, pagenum):
-        LIST_PAGE = "https://letterboxd.com/{}/films/page/{}"
-        async with self.session.get(LIST_PAGE.format(self.username, pagenum)) as resp:
+        url = "https://letterboxd.com/{}/films/page/{}"
+        async with self.session.get(url.format(self.username, pagenum)) as resp:
             page = await resp.text()
         return html.document_fromstring(page)
 
@@ -128,12 +104,6 @@ class LetterboxdProfile:
             for page in await self.get_all_pages()
             for film, data in self.find_films(page).items()
         }
-        # self.reviews = {
-        #     film: review
-        #     for film in self.films
-        #     for _, review in await self.get_review(film)
-        #     if film["reviewed"]
-        # }
         print(f"Populated {self.username}'s profile with {len(self)} films")
 
     @staticmethod
@@ -146,11 +116,7 @@ class LetterboxdProfile:
             session: aiohttp session
 
         Returns:
-            LetterboxProfile object
-
-        Raises:
-            # TODO!
-            If no profiles could be found
+            LetterboxProfile(username) object
         """
         if await LetterboxdProfile.exists(username, session):
             prof = LetterboxdProfile(username, session)
