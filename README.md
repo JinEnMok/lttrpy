@@ -1,6 +1,6 @@
 # lttrpy
 
-## A CLI Python script to compare Letterboxd users' watched films, with ratings and "likes".
+## A CLI Python script to compare Letterboxd users' watched films, with ratings and likes.
 
 ### Usage
 
@@ -19,12 +19,12 @@ Sample output:
 |         Film title         |      user1's rating    |     user2's rating     |   user3's rating   |
 |----------------------------|:----------------------:|:----------------------:|:------------------:|
 |Waking Life                 |   ★★★★★ (liked)     |     ★★★★★ (liked)      |        n/r         |
-|The Revenant                |        ★★★★½        |          n/r           |        n/r         |
+|The Revenant                |        ★★★★½        |          n/r           |        ★★★         |
 |The Grand Budapest Hotel    |     ★★★★½ (liked)      |     ★★★★★ (liked)      |        n/r         |
 |Léon: The Professional      |          ★★★★          |          n/r           |        n/r         |
-|Hercules                    |          n/r           |          n/r           |        n/r         |
+|Hercules                    |          n/r           |          n/r           |       ★★★★        |
 |Baby Driver                 |     ★★★★½ (liked)      |          ★★★           |        n/r         |
-|Now You See Me              |          ★★★½          |          n/r           |        n/r         |
+|Now You See Me              |          ★★★½          |          n/r           |        (liked)        |
 |X2                          |          n/r           |          n/r           |        n/r         |
 
 
