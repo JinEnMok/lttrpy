@@ -21,12 +21,12 @@ class LetterboxdFilm:
         self.review: tuple(bool, str) = review
 
     def __repr__(self):
-        return f"Film({self.title!r})"
+        return f"Film({self.title!r}, {self.film_id!r}, {self.session!r})"
 
     def __str__(self):
         return f"{self.title} ({self.year})"
 
-    async def get_page(self, user=''):
+    async def get_page(self, user='', refresh=False):
         url = "https://letterboxd.com/{}/film/{}/"
         async with self.session.get(url.format(user, self.film_id)) as resp:
             page = await resp.text()
@@ -67,10 +67,11 @@ class LetterboxdFilm:
         else:
             return rating
 
-    async def populate(self, user):
+    async def populate(self, user: str, refresh=False):
         self.title = await self.get_title()
         self.review = await self.get_review(user)
         self.year = await self.get_year()
+        self.rating = await self.get_rating(user)
 
     @staticmethod
     async def initialise(film, user, session):

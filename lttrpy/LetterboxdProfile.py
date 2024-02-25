@@ -10,7 +10,7 @@ class LetterboxdProfile:
         self.films = dict()
 
     def __repr__(self):
-        return f"LetterboxdProfile({self.username!r})"
+        return f"LetterboxdProfile({self.username!r}, {self.session!r})"
 
     def __getitem__(self, key):
         if type(key) is str:
