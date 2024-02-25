@@ -1,15 +1,15 @@
-from aiohttp import ClientResponseError
+from aiohttp import ClientResponseError, ClientSession
 from lxml import html
 
 
 class LetterboxdProfile:
-    def __init__(self, username: str, session):
+    def __init__(self, username: str, session) -> None:
         self.username: str = username
         self.link: str = f"https://letterboxd.com/{self.username}"
-        self.session = session
-        self.films = dict()
+        self.session: ClientSession = session
+        self.films: dict[str, dict] = dict()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"LetterboxdProfile({self.username!r}, {self.session!r})"
 
     def __getitem__(self, key):
@@ -27,11 +27,11 @@ class LetterboxdProfile:
     def __len__(self) -> int:
         return len(self.films)
 
-    def __add__(self, *others):
+    def __add__(self, *others) -> set:
         return self.common(self, *others)
 
     @staticmethod
-    async def exists(username, session):
+    async def exists(username, session) -> bool:
         """
         Check if a Letterboxd profile exists
 
@@ -47,14 +47,12 @@ class LetterboxdProfile:
             await session.get(
                 f"https://letterboxd.com/{username}", raise_for_status=True
             )
-            print(f"Found user {username}")
-            return username
+            return True
         except ClientResponseError:
-            print(f"User {username} not found.")
-            return None
+            return False
 
     @staticmethod
-    def common(*profiles) -> set:
+    def common(*profiles) -> set[dict]:
         """
         Compare multiple profiles and find common films.
 
@@ -67,10 +65,10 @@ class LetterboxdProfile:
         return set.intersection(*(set(prof.films.keys()) for prof in profiles))
 
     @staticmethod
-    def diff(*profiles) -> set:
+    def diff(*profiles) -> set[dict]:
         return set.difference(*(set(prof.films.keys()) for prof in profiles))
 
-    def find_films(self, page) -> dict:
+    def find_films(self, page) -> dict[str, dict]:
         films = {
             node.xpath("./div")[0].get("data-film-slug"): {
                 "html": node,
@@ -83,7 +81,7 @@ class LetterboxdProfile:
         }
         return films
 
-    async def get_all_pages(self) -> str:
+    async def get_all_pages(self) -> list:
         page1 = await self.get_user_page(1)
         last_page = int(page1.xpath("//li[@class='paginate-page'][last()]/a/text()")[0])
         pages = [page1] + [
@@ -99,7 +97,7 @@ class LetterboxdProfile:
         return html.document_fromstring(page)
 
     async def populate(self) -> None:
-        self.films: dict = {
+        self.films = {
             film: data
             for page in await self.get_all_pages()
             for film, data in self.find_films(page).items()
@@ -120,5 +118,8 @@ class LetterboxdProfile:
         """
         if await LetterboxdProfile.exists(username, session):
             prof = LetterboxdProfile(username, session)
+            print(f"Found user {username}")
             await prof.populate()
             return prof
+        else:
+            print(f"Could not initialise {username}")

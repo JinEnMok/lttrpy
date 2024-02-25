@@ -19,8 +19,8 @@ if sys.platform in ("linux", "darwin"):
 
 
 from aiohttp import ClientSession
-from LetterboxdProfile import LetterboxdProfile
-from OutputFormatter import write_markdown
+from .LetterboxdProfile import LetterboxdProfile
+from .OutputFormatter import write_markdown
 
 
 assert (
@@ -28,7 +28,7 @@ assert (
 ), "This script requires Python 3.9 or newer to run. Exiting."
 
 
-async def main():
+async def main() -> None:
     async with ClientSession(raise_for_status=True) as client:
         tasks = tuple(
             LetterboxdProfile.initialise(user, client) for user in set(sys.argv[1:])
