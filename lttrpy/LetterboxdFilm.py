@@ -20,8 +20,8 @@ class LetterboxdFilm:
         self.rating: str = rating
         self.liked: bool = liked
         self.review: Optional[tuple[bool, str]] = review
-        self.main_page = None
-        self.user_page = None
+        self.main_page: Optional[html.HtmlElement] = None
+        self.user_page: Optional[html.HtmlElement] = None
 
     def __repr__(self):
         return f"Film({self.title!r}, {self.film_id!r}, {self.session!r})"
@@ -33,12 +33,12 @@ class LetterboxdFilm:
         url = "https://letterboxd.com/{}/film/{}/"
         async with self.session.get(url.format(user, self.film_id)) as resp:
             page = await resp.text()
-        tree = html.document_fromstring(page)
+        tree: html.HtmlElement = html.document_fromstring(page)
         return tree
 
     async def get_title(self, user='', refresh=False) -> str:
-        if self.year and not refresh:
-            return self.year
+        if self.title and not refresh:
+            return self.title
         if not self.main_page:
             self.main_page = await self.get_page(user=user)
         xpath = "//meta[@property='og:title'][1]"
@@ -49,9 +49,9 @@ class LetterboxdFilm:
         if self.year and not refresh:
             return self.year
         if not self.main_page:
-            self.main_page = await self.get_page(user=user)
+            self.main_page = await self.get_page()
         xpath = "//meta[@property='og:title'][1]"
-        year = self.main_page.xpath(xpath)[0].get("content")[-5:-1]
+        year: str = self.main_page.xpath(xpath)[0].get("content")[-5:-1]
         return int(year)
 
     async def get_review(self, user, refresh=False) -> tuple[bool, str]:
@@ -77,7 +77,7 @@ class LetterboxdFilm:
         if not self.user_page:
             self.user_page = await self.get_page(user=user)
         xpath = "//meta[@name='twitter:data2'][1]"
-        rating = self.user_page.xpath(xpath)
+        rating: str | list = self.user_page.xpath(xpath)
         if rating:
             return rating[0].get('content')
         else:
@@ -88,9 +88,6 @@ class LetterboxdFilm:
         self.review = await self.get_review(user)
         self.year = await self.get_year()
         self.rating = await self.get_rating(user)
-
-    async def get_user_data(self, user: str) -> None:
-        self.
 
     @staticmethod
     async def initialise(film, user, session):
