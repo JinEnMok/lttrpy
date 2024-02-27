@@ -40,8 +40,8 @@ class LetterboxdProfile:
             session: the aiohttp ClientSession object
 
         Returns:
-            Username, if the associated profile exists
-            Otherwise, None
+            True, if the associated profile exists
+            Otherwise, False
         """
         try:
             await session.get(
@@ -70,30 +70,30 @@ class LetterboxdProfile:
 
     def find_films(self, page) -> dict[str, dict]:
         films = {
-            node.xpath("./div")[0].get("data-film-slug"): {
-                "html": node,
-                "title": node.xpath("./div[1]/img")[0].get("alt"),
-                "rating": node.xpath("./p/span[1]/text()"),
-                "liked": True if node.xpath("./p/span[2]") else False,
-                "reviewed": True if node.xpath("./p/a") else False,
+            poster.xpath("./div")[0].get("data-film-slug"): {
+                "html": poster,
+                "title": poster.xpath("./div[1]/img")[0].get("alt"),
+                "rating": poster.xpath("./p/span[1]/text()"),
+                "liked": True if poster.xpath("./p/span[2]") else False,
+                "reviewed": True if poster.xpath("./p/a") else False,
             }
-            for node in page.xpath("//ul/li[@class='poster-container']")
+            for poster in page.xpath("//ul/li[@class='poster-container']")
         }
         return films
 
-    async def get_all_pages(self) -> list:
-        page1 = await self.get_user_page(1)
-        last_page = int(page1.xpath("//li[@class='paginate-page'][last()]/a/text()")[0])
-        pages = [page1] + [
+    async def get_all_pages(self) -> list[html.HtmlElement]:
+        page1: html.HtmlElement = await self.get_user_page(1)
+        last_page: int = int(page1.xpath("//li[@class='paginate-page'][last()]/a/text()")[0])
+        pages: list = [page1] + [
             (await self.get_user_page(page)) for page in range(2, last_page + 1)
         ]
         print(f"Downloaded {last_page} pages for {self.username}")
         return pages
 
-    async def get_user_page(self, pagenum):
+    async def get_user_page(self, pagenum) -> html.HtmlElement:
         url = "https://letterboxd.com/{}/films/page/{}"
         async with self.session.get(url.format(self.username, pagenum)) as resp:
-            page = await resp.text()
+            page: html.HtmlElement = await resp.text()
         return html.document_fromstring(page)
 
     async def populate(self) -> None:

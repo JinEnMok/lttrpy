@@ -7,9 +7,9 @@ class LetterboxdFilm:
         self,
         film_id: str,
         session,
-        title: str = '',
+        title: str = "",
         year: int = 0,
-        rating: str = '',
+        rating: str = "",
         liked: bool = False,
         review: Optional[tuple[bool, str]] = None,
     ) -> None:
@@ -29,20 +29,20 @@ class LetterboxdFilm:
     def __str__(self):
         return f"{self.title} ({self.year})"
 
-    async def get_page(self, user='', refresh=False) -> html.HtmlElement:
+    async def get_page(self, user="", refresh=False) -> html.HtmlElement:
         url = "https://letterboxd.com/{}/film/{}/"
         async with self.session.get(url.format(user, self.film_id)) as resp:
             page = await resp.text()
         tree: html.HtmlElement = html.document_fromstring(page)
         return tree
 
-    async def get_title(self, user='', refresh=False) -> str:
+    async def get_title(self, user="", refresh=False) -> str:
         if self.title and not refresh:
             return self.title
         if not self.main_page:
             self.main_page = await self.get_page(user=user)
         xpath = "//meta[@property='og:title'][1]"
-        title = self.main_page.xpath(xpath)[0].get('content')[:-1]
+        title = self.main_page.xpath(xpath)[0].get("content")[:-1]
         return title
 
     async def get_year(self, refresh=False) -> int:
@@ -76,12 +76,12 @@ class LetterboxdFilm:
             return self.rating
         if not self.user_page:
             self.user_page = await self.get_page(user=user)
-        xpath = "//meta[@name='twitter:data2'][1]"
-        rating: str | list = self.user_page.xpath(xpath)
+        xpath: str = "//meta[@name='twitter:data2'][1]"
+        rating: html.HtmlElement = self.user_page.xpath(xpath)
         if rating:
-            return rating[0].get('content')
+            return rating[0].get("content")
         else:
-            return 'n/r'
+            return "n/r"
 
     async def populate(self, user: str, refresh=False) -> None:
         self.title = await self.get_title()
