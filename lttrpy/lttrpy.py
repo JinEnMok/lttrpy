@@ -20,8 +20,8 @@ if sys.platform in ("linux", "darwin"):
 
 
 from aiohttp import ClientSession
-from .LetterboxdProfile import LetterboxdProfile
-from .OutputFormatter import write_markdown
+from LetterboxdProfile import LetterboxdProfile
+from OutputFormatter import write_markdown
 
 
 assert (
@@ -31,12 +31,13 @@ assert (
 
 async def main() -> None:
     async with ClientSession(raise_for_status=True) as client:
-        tasks = tuple(
+        tasks: tuple = tuple(
             LetterboxdProfile.initialise(user, client) for user in set(sys.argv[1:])
         )
         profiles = await asyncio.gather(*tasks)
 
-    write_markdown(profiles, f"{'_'.join([p.username for p in profiles])}.md")
+    filename: str = f"{'_'.join(sorted([p.username for p in profiles]))}.md"
+    write_markdown(profiles, filename)
 
 
 if __name__ == "__main__":

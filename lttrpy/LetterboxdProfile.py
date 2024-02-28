@@ -1,5 +1,6 @@
 from aiohttp import ClientResponseError, ClientSession
 from lxml import html
+from typing import Union
 
 
 class LetterboxdProfile:
@@ -12,7 +13,7 @@ class LetterboxdProfile:
     def __repr__(self) -> str:
         return f"LetterboxdProfile({self.username!r}, {self.session!r})"
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Union[dict, tuple]:
         if type(key) is str:
             return self.films[key]
         elif type(key) in (slice, int):
@@ -21,8 +22,8 @@ class LetterboxdProfile:
     def __iter__(self):
         return iter(self.films)
 
-    def __contains__(self, item) -> bool:
-        return item in self.films
+    def __contains__(self, film: str) -> bool:
+        return film in self.films
 
     def __len__(self) -> int:
         return len(self.films)
@@ -31,7 +32,7 @@ class LetterboxdProfile:
         return self.common(self, *others)
 
     @staticmethod
-    async def exists(username, session) -> bool:
+    async def exists(username: str, session: ClientSession) -> bool:
         """
         Check if a Letterboxd profile exists
 
@@ -73,7 +74,11 @@ class LetterboxdProfile:
             poster.xpath("./div")[0].get("data-film-slug"): {
                 "html": poster,
                 "title": poster.xpath("./div[1]/img")[0].get("alt"),
-                "rating": poster.xpath("./p/span[1]/text()"),
+                "rating": (
+                    rating[0]
+                    if (rating := poster.xpath("./p/span[1]/text()"))
+                    else ""
+                ),
                 "liked": True if poster.xpath("./p/span[2]") else False,
                 "reviewed": True if poster.xpath("./p/a") else False,
             }
@@ -83,7 +88,9 @@ class LetterboxdProfile:
 
     async def get_all_pages(self) -> list[html.HtmlElement]:
         page1: html.HtmlElement = await self.get_user_page(1)
-        last_page: int = int(page1.xpath("//li[@class='paginate-page'][last()]/a/text()")[0])
+        last_page: int = int(
+            page1.xpath("//li[@class='paginate-page'][last()]/a/text()")[0]
+        )
         pages: list = [page1] + [
             (await self.get_user_page(page)) for page in range(2, last_page + 1)
         ]
@@ -91,13 +98,13 @@ class LetterboxdProfile:
         return pages
 
     async def get_user_page(self, pagenum) -> html.HtmlElement:
-        url = "https://letterboxd.com/{}/films/page/{}"
+        url: str = "https://letterboxd.com/{}/films/page/{}"
         async with self.session.get(url.format(self.username, pagenum)) as resp:
             page: html.HtmlElement = await resp.text()
         return html.document_fromstring(page)
 
     async def populate(self) -> None:
-        self.films = {
+        self.films: dict[str, dict] = {
             film: data
             for page in await self.get_all_pages()
             for film, data in self.find_films(page).items()

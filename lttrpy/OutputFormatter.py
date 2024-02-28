@@ -1,8 +1,8 @@
-from .LetterboxdProfile import LetterboxdProfile
+from LetterboxdProfile import LetterboxdProfile
 
 
 class Formatter:
-    def __init__(self, profiles: set[dict]):
+    def __init__(self, profiles: set[dict]) -> None:
         self.profiles: set[dict] = profiles
 
     def make_html(self) -> str:
@@ -57,23 +57,23 @@ def write_markdown(profiles, outfile: str) -> None:
 
         f.write("| Film title |")
         for user in profiles:
-            f.write(f"{user.username}'s rating |")
+            f.write(f" {user.username}'s rating |")
         f.write("\n")
 
         f.write("| --- |")
         for user in profiles:
-            f.write(": --- :|")
+            f.write(" :---: |")
         f.write("\n")
 
         for film_id in common_films:
             f.write(
-                f"| {profiles[0].films[film_id]["title"]} |"
+                f"| {profiles[0].films[film_id]['title']} |"
             )
             for user in profiles:
-                rating: str = user.films[film_id]["rating"][0]
+                rating: str = user.films[film_id]["rating"]
                 if user.films[film_id]["liked"]:
-                    f.write(f"{rating} (liked) |")
+                    f.write(f" {rating} (liked) |")
                 else:
-                    f.write(f"{rating} |")
+                    f.write(f" {rating} |")
             f.write("\n")
     print(f"Wrote output to {outfile}")
