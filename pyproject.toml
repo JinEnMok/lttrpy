@@ -1,6 +1,6 @@
 [project]
 name = "lttrpy"
-version = "2024.1"
+version = "2024.2"
 
 authors = [{name = "Said Sattarov", email = "said.sattarov@gmail.com"}]
 maintainers = [{name = "Said Sattarov", email = "said.sattarov@gmail.com"}]
@@ -8,7 +8,7 @@ maintainers = [{name = "Said Sattarov", email = "said.sattarov@gmail.com"}]
 description = "A script to compare several users' watched films on Letterboxd, with ratings and likes"
 readme = "README.md"
 
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "aiohttp",
     'lxml',

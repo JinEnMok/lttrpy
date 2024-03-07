@@ -6,9 +6,13 @@
 
 # Inspired by Sena Bayram's script
 
-
 import sys
 import asyncio
+
+from aiohttp import ClientSession
+from LetterboxdProfile import LetterboxdProfile
+from OutputFormatter import Formatter
+
 
 if sys.platform in ("linux", "darwin"):
     try:
@@ -19,25 +23,15 @@ if sys.platform in ("linux", "darwin"):
         print("uvloop library not found. It could provide some speedups.")
 
 
-from aiohttp import ClientSession
-from LetterboxdProfile import LetterboxdProfile
-from OutputFormatter import write_markdown
-
-
-assert (
-    sys.version_info[0] >= 3 and sys.version_info[1] >= 9
-), "This script requires Python 3.9 or newer to run. Exiting."
-
-
 async def main() -> None:
     async with ClientSession(raise_for_status=True) as client:
-        tasks: tuple = tuple(
+        create_profiles: tuple = tuple(
             LetterboxdProfile.initialise(user, client) for user in set(sys.argv[1:])
         )
-        profiles = await asyncio.gather(*tasks)
+        profiles = await asyncio.gather(*create_profiles)
 
     filename: str = f"{'_'.join(sorted([p.username for p in profiles]))}.md"
-    write_markdown(profiles, filename)
+    Formatter(profiles).write(filename, out_format="md")
 
 
 if __name__ == "__main__":
