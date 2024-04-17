@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>
+        {{ profiles | length }} common films for {{ profiles | map(attribute="username") | join(', ')}}
+    </title>
+</head>
+
+<body>
+    <h2>
+        {{ profiles | length }} common films for {{ profiles | map(attribute="username") | join(', ')}}
+    </h2>
+    <table>
+        <thead>
+            <tr>
+                <th>
+                    Film title
+                </th>
+                {% for profile in profiles|sort(attribute="username") %}
+                    <th style="text-align:center;"> 
+                        {{ profile.username }}'s rating
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+
+        <tbody>
+            {%- for film in common_films|sort -%}
+                <tr>
+                    <td>
+                        <i> {{ profiles[0][film].title }} ({{profiles[0][film].year}}) </i>
+                    </td>
+                    {%- for profile in profiles|sort(attribute="username") -%}
+                        <td style="text-align:center;">
+                            {{ profile[film].rating }} {% if profile[film].liked == true %} (liked) {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

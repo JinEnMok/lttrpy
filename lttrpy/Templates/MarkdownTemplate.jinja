@@ -1,0 +1,6 @@
+{{ '##' }} {{ common_films | length }} common films for {{ profiles | map(attribute="username") | join(', ')}}
+
+Film title | {% for profile in profiles|sort(attribute="username") %} {{profile.username}}'s rating | {% endfor %}
+
+{% for film in common_films|sort %}{{ profiles[0][film].title }} {% if profiles[0][film].year %} ({{profiles[0][film].year}}) {% endif %} | {% for profile in profiles|sort(attribute="username") %}{{ profile[film].rating }} {% if profile[film].liked == true %} (liked) {% endif %} | {% endfor %}
+{% endfor %}

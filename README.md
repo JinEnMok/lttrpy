@@ -10,7 +10,7 @@ python lttrpy.py user1 [user2 ...]
 
 ### Output
 
-Writes the comparison tables in a Github-flavoured Markdown file.
+Writes the comparison tables in a Github-flavoured Markdown file or an HTML file.
 
 Sample output:
 
@@ -29,10 +29,19 @@ Ratatouille | ★★★★½ |  |
 
 * Python >= 3.10
 * `aiohttp`
-* `lxml`  
-- (optional) `uvloop` - speeds up async, Linux and MacOS only
+* `lxml`
+* `jinja2`
+- (optional) `uvloop` - speeds up (?) async, Linux and MacOS only
   
+
+### Known bugs and troubleshooting
+
+* Sometimes the scraping simply hangs. Usually it takes no more than 15-20 seconds in total (for up to 5 users), so feel free to CTRL-C and start over if it's taking longer.
+
+
 ### TODO:
+- Bugs: 
+    * LetterboxdFilm.get_page() breaks if there's no diary entry. Probably should rewrite it so that it uses the "activity" page directly
 
 - Features:
     * Sort by:
@@ -46,3 +55,7 @@ Ratatouille | ★★★★½ |  |
     * More verbosity during stages (fancy progress bars?)
 - Long-term goals:
     * Create a locally-served interactive app
+
+### Credits
+
+This script was inspired by a similar script from Sena Bayram.

@@ -1,26 +1,34 @@
 [project]
 name = "lttrpy"
-version = "2024.2"
+version = "2024.3"
 
 authors = [{name = "Said Sattarov", email = "said.sattarov@gmail.com"}]
 maintainers = [{name = "Said Sattarov", email = "said.sattarov@gmail.com"}]
 
 description = "A script to compare several users' watched films on Letterboxd, with ratings and likes"
-readme = "README.md"
+readme = {file = "README.md", content-type = "text/markdown"}
 
 requires-python = ">=3.10"
 dependencies = [
     "aiohttp",
-    'lxml',
+    "lxml",
+    "jinja2",
 ]
 
-keywords = ["letterboxd", "films", "movies"]
+keywords = ["letterboxd", "films", "movies", "scraper"]
 classifiers = ["Development Status :: 3 - Alpha",
-			   "License :: OSI Approved :: MIT License",
-]			   
+               "License :: OSI Approved :: MIT License",
+               "Environment :: Console",
+               "Operating System :: OS Independent",
+               "Programming Language :: Python",
+               "Programming Language :: Python :: 3 :: Only",
+               "Programming Language :: Python :: 3.10",
+               "Programming Language :: Python :: 3.11",
+               "Programming Language :: Python :: 3.12",
+]
 
 [project.urls]
-Repository = "https://github.com/JinEnMok/lttrpy"
+Repository = "https://git.disroot.org/gallifreyan/lttrpy"
 
 [project.optional-dependencies]
 fast = ["uvloop; sys_platform=='linux' or sys_platform=='darwin'"]
@@ -30,4 +38,4 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
-lttrpy = "lttrpy:main"
+lttrpy = "lttrpy:__main__:main"
