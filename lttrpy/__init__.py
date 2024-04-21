@@ -1,1 +1,1 @@
-__all__ = ["OutputFormatter", "LetterboxdProfile", "LetterboxdFilm"]
+__all__ = ["output_formatter", "letterboxd_profile", "letterboxd_film"]

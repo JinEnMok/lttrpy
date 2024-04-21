@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
 
+# SPDX-License-Identifier: MIT
 # MIT License
 # Copyright (c) 2024 Said Sattarov
 # See https://mit-license.org/ for the full text of the license
 
 import asyncio
-
 from argparse import ArgumentParser
 from pathlib import Path
+from typing import TYPE_CHECKING
+
 from aiohttp import ClientSession
 
-from .LetterboxdProfile import LetterboxdProfile
-from .OutputFormatter import Formatter
+from lttrpy.letterboxd_profile import LetterboxdProfile
+from lttrpy.output_formatter import Formatter
 
+if TYPE_CHECKING:
+    from argparse import Namespace
+    from typing import Iterable
 
 try:
     import uvloop
@@ -23,7 +28,7 @@ else:
 
 
 async def lttrpy() -> None:
-    parser = ArgumentParser(description="Compare Letterboxd users' watched films")
+    parser: ArgumentParser = ArgumentParser(description="Compare Letterboxd users' watched films")
     parser.add_argument(
         "-f",
         "--format",
@@ -41,22 +46,22 @@ async def lttrpy() -> None:
         type=str,
     )
     parser.add_argument("-o", "--output", dest="outfile", help="Output file", type=str)
-    args = parser.parse_args()
+    args: Namespace = parser.parse_args()
 
     async with ClientSession(raise_for_status=True) as client:
         create_profiles: tuple = tuple(
             LetterboxdProfile.initialise(user, client) for user in args.users
         )
-        profiles = await asyncio.gather(*create_profiles)
+        profiles: Iterable[LetterboxdProfile] = await asyncio.gather(*create_profiles)
 
-    formatted_output = Formatter(profiles)
+    formatted_output: Formatter = Formatter(profiles)
 
     for form in args.formats:
         if args.outfile:
-            filename = Path(args.outfile)
+            filename: Path = Path(args.outfile)
         else:
-            filename = Path(
-                f"{'_'.join(sorted([p.username for p in profiles]))}"
+            filename: Path = Path(
+                f"{'_'.join(sorted([p.username for p in profiles]))}",
             ).with_suffix(f".{form}")
 
         formatted_output.write(filename, out_format=form)
