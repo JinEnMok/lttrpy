@@ -1,6 +1,5 @@
 """Letterboxd film info container and fetcher class"""
 
-import re
 from typing import TYPE_CHECKING
 
 from lxml import html
@@ -13,8 +12,6 @@ if TYPE_CHECKING:
 
 
 class LetterboxdFilm:
-    REVIEWED_RE: re.Pattern = re.compile(r"", flags=(re.IGNORECASE | re.VERBOSE))
-
     section_xpath: str = "/html/body/div[1]/div/div/section/div[2]/div/section"
 
     # async with ClientSession() as session:
@@ -69,6 +66,11 @@ class LetterboxdFilm:
 
     def __str__(self) -> str:
         return f"{self.title} ({self.year})"
+
+    async def get_activity(self, user: str, refresh: bool = False) -> HtmlElement:
+        url: str = "https://letterboxd.com/{}/film/{}/activity"
+        xpath: str = "//*[@id='activity-table-body']"
+
 
     async def get_page(self, user: str = "", refresh: bool = False) -> HtmlElement:
         url: str = "https://letterboxd.com/{}/film/{}/"

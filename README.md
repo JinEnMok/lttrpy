@@ -41,7 +41,7 @@ Ratatouille | ★★★★½ |  |
 
 ### TODO:
 - Bugs: 
-    * LetterboxdFilm.get_page() breaks if there's no diary entry. Probably should rewrite it so that it uses the "activity" page directly
+    * `LetterboxdFilm.get_page()` breaks if there's no diary entry. Probably should rewrite it so that it uses the "activity" page directly
 
 - Features:
     * Sort by:
