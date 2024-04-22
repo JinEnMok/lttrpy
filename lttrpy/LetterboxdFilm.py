@@ -11,7 +11,7 @@ class LetterboxdFilm:
         rating: str = None,
         liked: bool = None,
         review: tuple(bool, str) = None,
-    ):
+    ) -> None:
         self.film_id: str = film_id
         self.session = session
         self.title: str = title
