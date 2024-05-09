@@ -31,7 +31,6 @@ Ratatouille | ★★★★½ |  |
 * `aiohttp`
 * `lxml`
 * `jinja2`
-- (optional) `uvloop` - speeds up (?) async, Linux and MacOS only
   
 
 ### Known bugs and troubleshooting

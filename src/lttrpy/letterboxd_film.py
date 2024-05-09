@@ -1,41 +1,17 @@
 """Letterboxd film info container and fetcher class"""
 
-from typing import TYPE_CHECKING
+# from typing import Self
+from typing_extensions import Self
 
+
+from aiohttp import ClientSession
 from lxml import html
-
-if TYPE_CHECKING:
-    from typing import Self
-
-    from aiohttp import ClientSession
-    from lxml.html import HtmlElement
+from lxml.html import HtmlElement
 
 
 class LetterboxdFilm:
     section_xpath: str = "/html/body/div[1]/div/div/section/div[2]/div/section"
 
-    # async with ClientSession() as session:
-    # ...:     async with session.get("https://letterboxd.com/kurstboy/film/everything-everywhere-all-at-once/activity
-    # ...: /") as resp:
-    # ...:         karst_page = await resp.text()
-    # ...:
-    # ...: karst_tree = html.fromstring(karst_page)
-    # ...: karst_sections = karst_tree.xpath(section_xpath)
-    # ...: for section in karst_sections[:-1]:
-    # ...:     print(section.text_content().split())
-
-    ratings_dict: dict[str, float] = {
-        "½": 0.5,
-        "★": 1,
-        "★½": 1.5,
-        "★★": 2,
-        "★★½": 2.5,
-        "★★★": 3,
-        "★★★½": 3.5,
-        "★★★★": 4,
-        "★★★★½": 4.5,
-        "★★★★★": 5,
-    }
 
     def __init__(
         self,
@@ -54,7 +30,7 @@ class LetterboxdFilm:
         self.title: str = title
         self.year: int = year
         self.rating: str = rating
-        self.rating_numeric: float = self.ratings_dict.get(self.rating, 0)
+        self.rating_numeric: float = self.star2float(self.rating)
         self.liked: bool = liked
         self.reviewed: bool = reviewed
         self.review: dict[str, bool | str] = {"spoiler": False, "text": ""}
@@ -67,9 +43,14 @@ class LetterboxdFilm:
     def __str__(self) -> str:
         return f"{self.title} ({self.year})"
 
+
+    @classmethod
+    def star2float(cls, rating: str) -> float:
+        return sum([rating.count("★"), rating.count("½") / 2])
+
     async def get_activity(self, user: str, refresh: bool = False) -> HtmlElement:
         url: str = "https://letterboxd.com/{}/film/{}/activity"
-        xpath: str = "//*[@id='activity-table-body']"
+        xpath: str = "/html/body/div[1]/div/div/section/div[2]/div/section"
 
 
     async def get_page(self, user: str = "", refresh: bool = False) -> HtmlElement:

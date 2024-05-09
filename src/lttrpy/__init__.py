@@ -5,26 +5,17 @@
 # Copyright (c) 2024 Said Sattarov
 # See https://mit-license.org/ for the full text of the license
 
+__all__ = ["output_formatter", "letterboxd_profile", "letterboxd_film"]
+
 import asyncio
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Iterable
 
 from aiohttp import ClientSession
 
 from lttrpy.letterboxd_profile import LetterboxdProfile
 from lttrpy.output_formatter import Formatter
-
-if TYPE_CHECKING:
-    from argparse import Namespace
-    from typing import Iterable
-
-try:
-    import uvloop
-except ImportError:
-    pass
-else:
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 async def lttrpy() -> None:

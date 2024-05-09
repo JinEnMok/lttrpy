@@ -4,16 +4,10 @@ Currently able to output HTML and Markdown."""
 import sys
 from os import PathLike
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Iterable
 
-from jinja2 import Environment, FileSystemLoader
-
-if TYPE_CHECKING:
-    from typing import Iterable
-
-    from jinja2 import Template
-
-    from lttrpy.letterboxd_profile import LetterboxdProfile
+from jinja2 import Environment, FileSystemLoader, Template
+from lttrpy.letterboxd_profile import LetterboxdProfile
 
 
 class Formatter:
@@ -28,25 +22,25 @@ class Formatter:
     module_dir: Path = Path(sys.path[0])
     environment: Environment = Environment(
         autoescape=True,
-        loader=FileSystemLoader([module_dir / "Templates"]),
+        loader=FileSystemLoader([module_dir / "templates"]),
         lstrip_blocks=True,
         trim_blocks=True,
     )
 
     def __init__(self, profiles: Iterable[LetterboxdProfile]) -> None:
-        self.profiles: Iterable[LetterboxdProfile] = profiles
-        self.overlap: set[str] = LetterboxdProfile.common(*profiles)
+        self.profiles: tuple[LetterboxdProfile, ...] = tuple(profiles)
+        self.overlap: set[str] = self.profiles[0].common(*profiles)
         self.context: dict[str, Iterable[LetterboxdProfile] | set[str]] = {
             "profiles": self.profiles,
             "common_films": self.overlap,
         }
 
     def make_html(self) -> str:
-        template: Template = self.environment.get_template("HTMLTemplate.jinja")
+        template: Template = self.environment.get_template("html_template.py.jinja")
         return template.render(self.context)
 
     def make_md(self) -> str:
-        template: Template = self.environment.get_template("MarkdownTemplate.jinja")
+        template: Template = self.environment.get_template("markdown_template.py.jinja")
         return template.render(self.context)
 
     def write(self, filename: str | PathLike, out_format: str = "html") -> None:

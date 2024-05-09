@@ -1,18 +1,14 @@
 """Letterboxd user profile data container and fetcher class"""
 
 import asyncio
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator
+from typing_extensions import Self
 
-from aiohttp import ClientResponseError
+from aiohttp import ClientResponseError, ClientSession
 from lxml import html
+from lxml.html import HtmlElement
 
 from lttrpy.letterboxd_film import LetterboxdFilm
-
-if TYPE_CHECKING:
-    from typing import Iterator, Self
-
-    from aiohttp import ClientSession
-    from lxml.html import HtmlElement
 
 
 class LetterboxdProfile:

@@ -1,6 +1,6 @@
 [project]
 name = "lttrpy"
-version = "2024.3"
+version = "2024.5"
 
 authors = [{name = "Said Sattarov", email = "said.sattarov@gmail.com"}]
 maintainers = [{name = "Said Sattarov", email = "said.sattarov@gmail.com"}]
@@ -15,7 +15,7 @@ dependencies = [
     "jinja2",
 ]
 
-keywords = ["letterboxd", "films", "movies", "scraper"]
+keywords = ["letterboxd", "films", "movies", "scraping"]
 classifiers = ["Development Status :: 3 - Alpha",
                "License :: OSI Approved :: MIT License",
                "Environment :: Console",
@@ -30,18 +30,28 @@ classifiers = ["Development Status :: 3 - Alpha",
 [project.urls]
 Repository = "https://git.disroot.org/gallifreyan/lttrpy"
 
-[project.optional-dependencies]
-fast = ["uvloop; sys_platform=='linux' or sys_platform=='darwin'"]
-
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project.scripts]
-lttrpy = "lttrpy:__main__:main"
+lttrpy = "lttrpy:main"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "mypy",
+    "ruff",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lttrpy"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.10"
 allow_redefinition = true
 disable_error_code = ["no-redef",]
 
@@ -81,7 +91,7 @@ indent-width = 4
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F", "E", "I", "C90", "W", "N", "ANN", "C4", "ASYNC", "ICN", "SIM", "R", "S", "EXE", "COM", "EM",]
+select = ["F", "E", "I", "W", "N", "ANN", "C4", "C90", "ASYNC", "ICN", "SIM", "R", "S", "EXE", "COM", "EM",]
 ignore = ["ANN101", "ANN102", "ANN003",]
 
 [tool.ruff.format]
