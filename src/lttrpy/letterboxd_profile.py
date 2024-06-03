@@ -1,14 +1,14 @@
 """Letterboxd user profile data container and fetcher class"""
 
 import asyncio
-from typing import TYPE_CHECKING, Iterator
-from typing_extensions import Self
+from typing import Iterator
 
 from aiohttp import ClientResponseError, ClientSession
 from lxml import html
 from lxml.html import HtmlElement
+from typing_extensions import Self
 
-from lttrpy.letterboxd_film import LetterboxdFilm
+from .letterboxd_film import LetterboxdFilm
 
 
 class LetterboxdProfile:
@@ -96,7 +96,7 @@ class LetterboxdProfile:
         }
 
     @classmethod
-    async def exists(cls, username: str, session: ClientSession) -> bool:
+    async def user_exists(cls, username: str, session: ClientSession) -> bool:
         try:
             await session.get(f"https://letterboxd.com/{username}", raise_for_status=True)
             return True
@@ -123,7 +123,7 @@ class LetterboxdProfile:
         Returns:
             LetterboxProfile(username) object
         """
-        if not (await cls.exists(username, session)):
+        if not (await cls.user_exists(username, session)):
             print(f"Could not initialise {username}")
             return None
 

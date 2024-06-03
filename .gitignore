@@ -120,5 +120,6 @@ dmypy.json
 requirements.lock
 requirements-dev.lock
 
+.vscode/
 *.md
 !README.md

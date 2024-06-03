@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import Iterable
 
 from jinja2 import Environment, FileSystemLoader, Template
-from lttrpy.letterboxd_profile import LetterboxdProfile
+
+from .letterboxd_profile import LetterboxdProfile
 
 
 class Formatter:
