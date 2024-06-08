@@ -11,11 +11,13 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Iterable
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 
 from lttrpy import __version__
 from lttrpy.letterboxd_profile import LetterboxdProfile
 from lttrpy.output_formatter import Formatter
+
+TOTAL_TIMEOUT: int = 20
 
 
 async def lttrpy() -> None:
@@ -45,7 +47,10 @@ async def lttrpy() -> None:
     )
     args: Namespace = parser.parse_args()
 
-    async with ClientSession(raise_for_status=True) as client:
+    async with ClientSession(
+        raise_for_status=True,
+        timeout=ClientTimeout(total=TOTAL_TIMEOUT),
+    ) as client:
         create_profiles: tuple = tuple(
             LetterboxdProfile.initialise(user, client) for user in args.users
         )

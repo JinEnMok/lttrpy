@@ -1,14 +1,14 @@
 """Letterboxd user profile data container and fetcher class"""
 
 import asyncio
-from typing import Iterator
+from typing import Iterator, Self
 
 from aiohttp import ClientResponseError, ClientSession
 from lxml import html
 from lxml.html import HtmlElement
-from typing_extensions import Self
 
 from .letterboxd_film import LetterboxdFilm
+from .utils import retry
 
 
 class LetterboxdProfile:
@@ -28,7 +28,6 @@ class LetterboxdProfile:
             return tuple(self.films.values())[key]
         else:
             raise KeyError
-        return None
 
     def __iter__(self) -> Iterator[LetterboxdFilm]:
         yield from self.films.values()
@@ -39,17 +38,18 @@ class LetterboxdProfile:
     def __len__(self) -> int:
         return len(self.films)
 
-    async def get_user_page(self, pagenum: int) -> HtmlElement:
+    @retry()
+    async def get_filmlist_page(self, pagenum: int) -> HtmlElement:
         url: str = "https://letterboxd.com/{}/films/page/{}"
         async with self.session.get(url.format(self.username, pagenum)) as resp:
             page: str = await resp.text()
         return html.document_fromstring(page)
 
     async def get_all_pages(self) -> list[HtmlElement]:
-        page1: HtmlElement = await self.get_user_page(1)
-        last_page: int = int(page1.xpath("//li[@class='paginate-page'][last()]/a/text()")[0])
-        pages: list[HtmlElement] = [page1] + [
-            (await self.get_user_page(page)) for page in range(2, last_page + 1)
+        first_page: HtmlElement = await self.get_filmlist_page(1)
+        num_pages: int = int(first_page.xpath("//li[@class='paginate-page'][last()]/a/text()")[0])
+        pages: list[HtmlElement] = [first_page] + [
+            (await self.get_filmlist_page(page)) for page in range(2, num_pages + 1)
         ]
         return pages
 
@@ -67,11 +67,10 @@ class LetterboxdProfile:
         }
         return films
 
-    async def populate_films(self, page: HtmlElement, unlazy: bool) -> dict[str, LetterboxdFilm]:
+    async def populate_films(self, page: HtmlElement) -> dict[str, LetterboxdFilm]:
         initialise_films: tuple = tuple(
             LetterboxdFilm.initialise(
                 user=self.username,
-                unlazy=unlazy,
                 film_id=poster.xpath("./div")[0].get("data-film-slug"),
                 session=self.session,
                 title=poster.xpath("./div[1]/img")[0].get("alt"),
@@ -92,7 +91,7 @@ class LetterboxdProfile:
             film_id: film_data
             for page in await self.get_all_pages()
             # for film_id, film_data in self.find_films(page).items()
-            for film_id, film_data in (await self.populate_films(page, unlazy=True)).items()
+            for film_id, film_data in (await self.populate_films(page)).items()
         }
 
     @classmethod
@@ -124,7 +123,7 @@ class LetterboxdProfile:
             LetterboxProfile(username) object
         """
         if not (await cls.user_exists(username, session)):
-            print(f"Could not initialise {username}")
+            print(f"Could not find user {username}")
             return None
 
         profile: Self = cls(username, session)
